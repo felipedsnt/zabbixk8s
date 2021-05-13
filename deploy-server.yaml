@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zabbix-server
+  labels:
+    app: zabbix-server
+    tier: zabbix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zabbix-server
+      tier: zabbix
+  template:
+    metadata:
+      labels:
+        app: zabbix-server
+        tier: zabbix
+    spec:
+      securityContext:
+       fsGroup: 1995
+      containers:
+      - image: zabbix/zabbix-server-mysql:centos-5.0-latest
+        name: zabbix
+        env:
+          - name: DB_SERVER_HOST
+            value: NAME_OR_IP
+          - name: MYSQL_USER
+            value: zabbix
+          - name: MYSQL_PASSWORD
+            value: PASSWORD
+          - name: MYSQL_DATABASE
+            value: "zabbix"
+          - name: ZBX_CACHESIZE
+            value: "1024M"
+          - name: ZBX_TRENDCACHESIZE
+            value: "1024M"
+          - name: ZBX_HISTORYCACHESIZE
+            value: "2048M"
+          - name: ZBX_HISTORYINDEXCACHESIZE
+            value: "1024M"
+          - name: ZBX_STARTTRAPPERS
+            value: "5"
+          - name: ZBX_STARTPREPROCESSORS
+            value: "10"
+          - name: ZBX_STARTDBSYNCERS
+            value: "10"
+          - name: DB_SERVER_PORT
+            value: "3306"
+        ports:
+        - containerPort: 10051
+          name: zabbix
+        volumeMounts:
+        - name: zabbix-persistent-alert
+          mountPath: /usr/lib/zabbix/alertscripts
+        - name: zabbix-persistent-external
+          mountPath: /usr/lib/zabbix/externalscripts
+      - image: zabbix/zabbix-agent:centos-5.0-latest
+        name: zabbix-agent
+        env:
+          - name: ZBX_HOSTNAME
+            value: "Zabbix server"
+          - name: ZBX_SERVER_HOST
+            value: "127.0.0.1"
+          - name: ZBX_PASSIVE_ALLOW
+            value: "true"
+          - name: ZBX_STARTAGENTS
+            value: "3"
+          - name: ZBX_TIMEOUT
+            value: "10"
+        ports:
+        - containerPort: 10050
+          name: zabbix-agent  
+          
+      volumes:
+      - name: zabbix-persistent-alert
+        persistentVolumeClaim:
+          claimName: internal-storage-claim
+      - name: zabbix-persistent-external
+        persistentVolumeClaim:
+          claimName: external-storage-claim

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zabbix-frontend
+  labels:
+    app: zabbix-frontend
+    tier: zabbix
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zabbix-frontend
+      tier: zabbix
+  template:
+    metadata:
+      labels:
+        app: zabbix-frontend
+        tier: zabbix
+    spec:
+      containers:
+      - image: zabbix/zabbix-web-nginx-mysql:alpine-5.0.1
+        name: zabbix-frontend
+        env:        
+          - name: ZBX_SERVER_HOST
+            value: zabbix-service
+          - name: DB_SERVER_HOST
+            value: NAME_OR_IP
+          - name: MYSQL_USER
+            value: "zabbix"
+          - name: MYSQL_PASSWORD
+            value: PASSWORD
+          - name: MYSQL_DATABASE
+            value: zabbix
+          - name: PHP_TZ
+            value: America/Sao_Paulo
+          - name: TZ
+            value: America/Sao_Paulo
+          - name: ZBX_SERVER_NAME
+            value: "Zabbix 5 - Lab AKS"
+          - name: ZBX_MEMORYLIMIT
+            value: 512M
+        ports:
+        - containerPort: 8080
+          name: zabbix-frontend
